@@ -1,6 +1,6 @@
-import React from 'react';
 import { StockData } from '@/lib/mockData';
 import { TrendingUp, TrendingDown, Minus, Brain } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface WatchlistTableProps {
   stocks: StockData[];
@@ -9,6 +9,7 @@ interface WatchlistTableProps {
 }
 
 const WatchlistTable: React.FC<WatchlistTableProps> = ({ stocks, onSelect, selectedSymbol }) => {
+  const navigate = useNavigate();
   return (
     <div className="overflow-auto max-h-[280px]">
       <table className="w-full text-meta">
@@ -25,7 +26,10 @@ const WatchlistTable: React.FC<WatchlistTableProps> = ({ stocks, onSelect, selec
           {stocks.map(stock => (
             <tr
               key={stock.symbol}
-              onClick={() => onSelect(stock)}
+              onClick={() => {
+                onSelect(stock);
+                navigate(`/stock/${stock.symbol}`);
+              }}
               className={`cursor-pointer border-b border-border/50 transition-colors ${
                 selectedSymbol === stock.symbol ? 'bg-primary/10' : 'hover:bg-secondary/50'
               }`}

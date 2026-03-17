@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { loginUser, signupUser } from '@/lib/api';
 
 interface User {
   id: string;
@@ -26,30 +27,38 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('aethelgard_user');
-    return saved ? JSON.parse(saved) : null;
+    const token = localStorage.getItem('aethelgard_token');
+    return (saved && token) ? JSON.parse(saved) : null;
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  const login = useCallback(async (email: string, _password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
-    await new Promise(r => setTimeout(r, 1200));
-    const u: User = { id: crypto.randomUUID(), name: email.split('@')[0], email };
-    localStorage.setItem('aethelgard_user', JSON.stringify(u));
-    setUser(u);
-    setIsLoading(false);
+    try {
+      const data = await loginUser(email, password);
+      localStorage.setItem('aethelgard_token', data.token);
+      localStorage.setItem('aethelgard_user', JSON.stringify(data.user));
+      setUser(data.user);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const signup = useCallback(async (name: string, email: string, _password: string) => {
+  const signup = useCallback(async (name: string, email: string, password: string) => {
     setIsLoading(true);
-    await new Promise(r => setTimeout(r, 1500));
-    const u: User = { id: crypto.randomUUID(), name, email };
-    localStorage.setItem('aethelgard_user', JSON.stringify(u));
-    setUser(u);
-    setIsLoading(false);
+    try {
+      const data = await signupUser(name, email, password);
+      localStorage.setItem('aethelgard_token', data.token);
+      localStorage.setItem('aethelgard_user', JSON.stringify(data.user));
+      setUser(data.user);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem('aethelgard_user');
+    localStorage.removeItem('aethelgard_token');
     setUser(null);
   }, []);
 

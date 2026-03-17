@@ -10,7 +10,7 @@ const StockChart: React.FC<StockChartProps> = ({ data }) => {
   const last30 = data.slice(-45);
 
   return (
-    <div className="h-[320px] w-full">
+    <div className="h-[400px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={last30} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
           <defs>

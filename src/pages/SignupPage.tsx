@@ -44,8 +44,8 @@ const SignupPage: React.FC = () => {
     try {
       await signup(name, email, password);
       navigate('/dashboard');
-    } catch {
-      setError('Registration failed. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
     }
   };
 
