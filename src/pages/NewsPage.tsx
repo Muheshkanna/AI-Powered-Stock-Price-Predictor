@@ -38,14 +38,19 @@ const NewsPage: React.FC = () => {
           <div className="col-span-12 lg:col-span-8 space-y-4">
             {newsItems.map((item, i) => (
               <motion.article
-                key={i}
+                key={item.id}
+                onClick={() => navigate(`/news/${item.id}`)}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.08 }}
                 className="group p-5 bg-card border border-border rounded-2xl hover:border-primary/30 hover:shadow-lg transition-all cursor-pointer relative overflow-hidden"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-lg ${item.sentiment === 'bullish' || item.sentiment === 'positive' ? 'bg-bullish/10 text-bullish' : 'bg-bearish/10 text-bearish'}`}>
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-lg ${
+                    item.sentiment === 'positive' ? 'bg-bullish/10 text-bullish' : 
+                    item.sentiment === 'negative' ? 'bg-bearish/10 text-bearish' : 
+                    'bg-secondary text-muted-foreground'
+                  }`}>
                     {item.sentiment.toUpperCase()}
                   </span>
                   <span className="text-xs text-muted-foreground">{item.time}</span>

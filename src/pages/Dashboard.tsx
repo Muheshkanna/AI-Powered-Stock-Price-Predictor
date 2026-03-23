@@ -22,12 +22,12 @@ import CrashIndicator from '@/components/dashboard/CrashIndicator';
 import TopMovers from '@/components/dashboard/TopMovers';
 import ThemeToggle from '@/components/ThemeToggle';
 
-const fadeUp = {
+const fadeUp: any = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
 };
 
-const stagger = {
+const stagger: any = {
   animate: { transition: { staggerChildren: 0.08 } },
 };
 
@@ -52,7 +52,27 @@ const Dashboard: React.FC = () => {
   const [stocks, setStocks] = React.useState(watchlistStocks);
   const [selectedStock, setSelectedStock] = React.useState(watchlistStocks[0]);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [showSearch, setShowSearch] = React.useState(false);
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+
+  // Debounce logic
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setSelectedIndex(0); // Reset selection on new search
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const filteredStocks = React.useMemo(() => {
+    const query = debouncedSearchQuery.toLowerCase().trim();
+    if (!query) return stocks.slice(0, 4); // Trending stocks if empty
+    return stocks.filter(s => 
+      s.symbol.toLowerCase().includes(query) || 
+      s.name.toLowerCase().includes(query)
+    ).slice(0, 6);
+  }, [debouncedSearchQuery, stocks]);
 
   React.useEffect(() => {
     const loadData = async () => {
@@ -64,6 +84,33 @@ const Dashboard: React.FC = () => {
     };
     loadData();
   }, []);
+
+  // Periodic price updates for realism
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setStocks(prev => prev.map(s => {
+        const change = (Math.random() - 0.48) * (s.price * 0.002);
+        const newPrice = Math.max(s.price + change, 0.01);
+        const newChange = newPrice - (s.price - s.change); // approximation
+        return {
+          ...s,
+          price: newPrice,
+          change: newChange,
+          changePercent: (newChange / (newPrice - newChange)) * 100
+        };
+      }));
+    }, 5000 + Math.random() * 5000); // 5-10s random interval
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Sync selectedStock with updated stocks list
+  React.useEffect(() => {
+    const updatedSelected = stocks.find(s => s.symbol === selectedStock.symbol);
+    if (updatedSelected) {
+      setSelectedStock(updatedSelected);
+    }
+  }, [stocks, selectedStock.symbol]);
 
   const priceHistory = React.useMemo(() => {
     if ((selectedStock as any).rawHistory) {
@@ -88,47 +135,101 @@ const Dashboard: React.FC = () => {
 
             {/* Search */}
             <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search 
+                className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground cursor-pointer hover:text-primary transition-colors z-10"
+                onClick={() => {
+                  if (filteredStocks.length > 0) {
+                    navigate(`/stock/${filteredStocks[selectedIndex].symbol}`);
+                    setSearchQuery('');
+                    setShowSearch(false);
+                  }
+                }}
+              />
               <input
                 value={searchQuery}
-                onChange={e => { setSearchQuery(e.target.value); setShowSearch(e.target.value.length > 0); }}
-                onFocus={() => setShowSearch(searchQuery.length > 0)}
+                onChange={e => setSearchQuery(e.target.value)}
+                onFocus={() => setShowSearch(true)}
                 onBlur={() => setTimeout(() => setShowSearch(false), 200)}
+                onKeyDown={e => {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setSelectedIndex(prev => (prev + 1) % filteredStocks.length);
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setSelectedIndex(prev => (prev - 1 + filteredStocks.length) % filteredStocks.length);
+                  } else if (e.key === 'Enter') {
+                    if (filteredStocks.length > 0) {
+                      navigate(`/stock/${filteredStocks[selectedIndex].symbol}`);
+                      setSearchQuery('');
+                      setShowSearch(false);
+                    }
+                  } else if (e.key === 'Escape') {
+                    setShowSearch(false);
+                  }
+                }}
                 placeholder="Search stocks, e.g. AAPL, Tesla..."
                 maxLength={30}
                 className="h-9 w-80 pl-10 pr-4 bg-secondary/60 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
               />
               {showSearch && (
-                <div className="absolute top-full left-0 w-full mt-2 bg-card border border-border rounded-xl shadow-2xl z-50 py-2 overflow-hidden">
-                  {stocks
-                    .filter(s => s.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                 s.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                    .slice(0, 6)
-                    .map(s => (
-                      <button
-                        key={s.symbol}
-                        onClick={() => navigate(`/stock/${s.symbol}`)}
-                        className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-primary/5 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <span className="font-mono text-xs font-bold text-primary">{s.symbol.slice(0, 2)}</span>
-                          </div>
-                          <div className="text-left">
-                            <div className="font-semibold text-sm text-foreground">{s.symbol}</div>
-                            <div className="text-xs text-muted-foreground">{s.name}</div>
-                          </div>
+                <div className="absolute top-full left-0 w-full mt-2 bg-card border border-border rounded-xl shadow-2xl z-50 py-2 overflow-hidden border-t-0 ring-1 ring-primary/10">
+                  <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
+                    <span>{searchQuery ? 'Search Results' : 'Trending Stocks'}</span>
+                    <span className="text-[9px] lowercase font-normal opacity-50">Arrow keys to navigate</span>
+                  </div>
+                  {filteredStocks.map((s, idx) => (
+                    <button
+                      key={s.symbol}
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Prevent onBlur from hiding results before click
+                        navigate(`/stock/${s.symbol}`);
+                        setSearchQuery('');
+                        setShowSearch(false);
+                      }}
+                      onMouseEnter={() => setSelectedIndex(idx)}
+                      className={`w-full px-4 py-2.5 flex items-center justify-between transition-all duration-200 ${idx === selectedIndex ? 'bg-primary/15 border-l-2 border-primary shadow-[inset_0_0_20px_rgba(var(--primary),0.05)]' : 'hover:bg-primary/5 border-l-2 border-transparent'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center transition-transform duration-200 ${idx === selectedIndex ? 'bg-primary/20 scale-105' : 'bg-primary/10'}`}>
+                          <span className="font-mono text-xs font-bold text-primary">{s.symbol.slice(0, 2)}</span>
                         </div>
-                        <div className="text-right">
-                          <div className="font-mono text-sm">${s.price.toFixed(2)}</div>
-                          <div className={`font-mono text-xs ${s.change >= 0 ? 'text-bullish' : 'text-bearish'}`}>
-                            {s.change >= 0 ? '+' : ''}{s.changePercent.toFixed(2)}%
-                          </div>
+                        <div className="text-left">
+                          <div className={`font-semibold text-sm transition-colors ${idx === selectedIndex ? 'text-primary' : 'text-foreground'}`}>{s.symbol}</div>
+                          <div className="text-xs text-muted-foreground">{s.name}</div>
                         </div>
-                      </button>
-                    ))}
-                  {stocks.filter(s => s.symbol.toLowerCase().includes(searchQuery.toLowerCase()) || s.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
-                    <div className="px-4 py-6 text-center text-muted-foreground text-sm">No stocks found for "{searchQuery}"</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-mono text-sm font-semibold">${s.price.toFixed(2)}</div>
+                        <div className={`font-mono text-xs font-medium ${s.change >= 0 ? 'text-bullish' : 'text-bearish'}`}>
+                          {s.change >= 0 ? '+' : ''}{s.changePercent.toFixed(2)}%
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                  {filteredStocks.length === 0 && searchQuery && (
+                    <div className="px-6 py-10 text-center animate-in fade-in zoom-in duration-300">
+                      <div className="w-16 h-16 bg-secondary/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-border/50 shadow-inner">
+                        <Search className="w-8 h-8 text-muted-foreground/30 animate-pulse" />
+                      </div>
+                      <div className="text-base font-semibold text-foreground">No matches found</div>
+                      <p className="text-sm text-muted-foreground mt-2 max-w-[200px] mx-auto leading-relaxed">
+                        We couldn't find any stocks matching <span className="text-primary font-mono">"{searchQuery}"</span>.
+                      </p>
+                      <div className="mt-6 pt-6 border-t border-border/50">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Try searching for</p>
+                        <div className="flex flex-wrap justify-center gap-2 mt-3">
+                          {['AAPL', 'TSLA', 'NVDA'].map(t => (
+                            <button 
+                              key={t}
+                              onClick={() => setSearchQuery(t)}
+                              className="px-2 py-1 bg-secondary hover:bg-primary/10 hover:text-primary rounded text-[10px] font-mono transition-colors"
+                            >
+                              {t}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}

@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
 import { fetchTopGainers, fetchTopLosers } from '@/lib/api';
 import { StockData } from '@/lib/mockData';
 
 const TopMovers: React.FC = () => {
+  const navigate = useNavigate();
   const [gainers, setGainers] = React.useState<StockData[]>([]);
   const [losers, setLosers] = React.useState<StockData[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -19,6 +21,10 @@ const TopMovers: React.FC = () => {
     };
     loadMovers();
   }, []);
+
+  const handleStockClick = (symbol: string) => {
+    navigate(`/stock/${symbol}`);
+  };
 
   return (
     <div className="w-full flex gap-4 mt-2">
@@ -36,7 +42,11 @@ const TopMovers: React.FC = () => {
         </div>
         <div className="space-y-2 relative z-10">
           {gainers.slice(0, 3).map((stock) => (
-            <div key={stock.symbol} className="flex items-center justify-between p-2 rounded-sm bg-background/50 hover:bg-secondary transition-colors border border-transparent hover:border-border/50 group cursor-default">
+            <div 
+              key={stock.symbol} 
+              onClick={() => handleStockClick(stock.symbol)}
+              className="flex items-center justify-between p-2 rounded-sm bg-background/50 hover:bg-secondary transition-colors border border-transparent hover:border-border/50 group cursor-pointer"
+            >
               <div className="flex items-center gap-3">
                 <span className="font-mono font-semibold text-foreground group-hover:text-bullish transition-colors">{stock.symbol}</span>
                 <span className="text-meta text-muted-foreground truncate w-24 hidden lg:inline-block">{stock.name}</span>
@@ -64,7 +74,11 @@ const TopMovers: React.FC = () => {
         </div>
         <div className="space-y-2 relative z-10">
           {losers.slice(0, 3).map((stock) => (
-            <div key={stock.symbol} className="flex items-center justify-between p-2 rounded-sm bg-background/50 hover:bg-secondary transition-colors border border-transparent hover:border-border/50 group cursor-default">
+            <div 
+              key={stock.symbol} 
+              onClick={() => handleStockClick(stock.symbol)}
+              className="flex items-center justify-between p-2 rounded-sm bg-background/50 hover:bg-secondary transition-colors border border-transparent hover:border-border/50 group cursor-pointer"
+            >
               <div className="flex items-center gap-3">
                 <span className="font-mono font-semibold text-foreground group-hover:text-bearish transition-colors">{stock.symbol}</span>
                 <span className="text-meta text-muted-foreground truncate w-24 hidden lg:inline-block">{stock.name}</span>

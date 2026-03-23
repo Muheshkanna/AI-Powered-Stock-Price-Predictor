@@ -28,7 +28,6 @@ const WatchlistTable: React.FC<WatchlistTableProps> = ({ stocks, onSelect, selec
               key={stock.symbol}
               onClick={() => {
                 onSelect(stock);
-                navigate(`/stock/${stock.symbol}`);
               }}
               className={`cursor-pointer border-b border-border/50 transition-colors ${
                 selectedSymbol === stock.symbol ? 'bg-primary/10' : 'hover:bg-secondary/50'

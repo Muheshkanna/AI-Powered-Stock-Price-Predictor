@@ -14,6 +14,8 @@ import ThemeToggle from '@/components/ThemeToggle';
 const DEFAULT_SEED_PRICES: Record<string, number> = {
   AAPL: 189.5, MSFT: 415.2, GOOGL: 175.8, AMZN: 198.4, NVDA: 875.3,
   META: 515.6, TSLA: 178.9, JPM: 215.4, BAC: 38.7, NFLX: 625.1,
+  ADBE: 512.45, PYPL: 64.32, INTC: 42.15, AMD: 181.24, CSCO: 48.76,
+  PEP: 172.45, KO: 61.23, WMT: 60.12, DIS: 112.56, V: 282.45, MA: 475.32,
 };
 
 const AVAILABLE_STOCKS = [
@@ -27,6 +29,17 @@ const AVAILABLE_STOCKS = [
   { symbol: 'JPM', name: 'JPMorgan' },
   { symbol: 'BAC', name: 'Bank of America' },
   { symbol: 'NFLX', name: 'Netflix' },
+  { symbol: 'ADBE', name: 'Adobe Inc.' },
+  { symbol: 'PYPL', name: 'PayPal' },
+  { symbol: 'INTC', name: 'Intel' },
+  { symbol: 'AMD', name: 'AMD' },
+  { symbol: 'CSCO', name: 'Cisco' },
+  { symbol: 'PEP', name: 'PepsiCo' },
+  { symbol: 'KO', name: 'Coca-Cola' },
+  { symbol: 'WMT', name: 'Walmart' },
+  { symbol: 'DIS', name: 'Disney' },
+  { symbol: 'V', name: 'Visa' },
+  { symbol: 'MA', name: 'Mastercard' },
 ];
 
 interface Holding { symbol: string; quantity: number; avgPrice: number; }
@@ -51,6 +64,14 @@ const PortfolioPage: React.FC = () => {
   const [isBuying, setIsBuying] = useState(false);
   const [buyError, setBuyError] = useState('');
   const [buySuccess, setBuySuccess] = useState('');
+
+  // Sell modal
+  const [showSellModal, setShowSellModal] = useState(false);
+  const [sellSymbol, setSellSymbol] = useState('');
+  const [sellQty, setSellQty] = useState('1');
+  const [isSelling, setIsSelling] = useState(false);
+  const [sellError, setSellError] = useState('');
+  const [sellSuccess, setSellSuccess] = useState('');
 
   // Projection state
   const [projections, setProjections] = useState<Record<string, Projection[]>>({});
@@ -99,7 +120,7 @@ const PortfolioPage: React.FC = () => {
     simRef.current = setInterval(() => {
       holdings.forEach(h => {
         const prev = livePricesRef.current[h.symbol] ?? h.avgPrice;
-        const delta = prev * (Math.random() * 0.003 - 0.0015);
+        const delta = prev * (Math.random() * 0.004 - 0.002);
         livePricesRef.current[h.symbol] = Math.max(prev + delta, 0.01);
       });
       setLiveHoldings(prev => prev.map(h => {
@@ -108,7 +129,7 @@ const PortfolioPage: React.FC = () => {
         const pnlPct = ((mp - h.avgPrice) / h.avgPrice) * 100;
         return { ...h, prevPrice: h.marketPrice, marketPrice: mp, pnl, pnlPct, totalValue: mp * h.quantity, trending: mp > h.marketPrice ? 'up' : mp < h.marketPrice ? 'down' : 'neutral' };
       }));
-    }, 2000);
+    }, 3000 + Math.random() * 4000); // Realistic timing: 3-7s
     return () => { if (simRef.current) clearInterval(simRef.current); };
   }, [holdings]);
 
@@ -132,6 +153,37 @@ const PortfolioPage: React.FC = () => {
       setTimeout(() => { setShowBuyModal(false); setBuySuccess(''); }, 1500);
     } catch (err: any) { setBuyError(err.message || 'Transaction failed.'); }
     finally { setIsBuying(false); }
+  };
+
+  const handleSell = async () => {
+    if (!user) return;
+    setSellError(''); setSellSuccess('');
+    const qty = parseInt(sellQty);
+    const holding = holdings.find(h => h.symbol === sellSymbol);
+    if (!qty || qty <= 0) { setSellError('Enter a valid quantity.'); return; }
+    if (!holding || qty > holding.quantity) { setSellError('Insufficient shares.'); return; }
+    
+    const price = livePricesRef.current[sellSymbol] || DEFAULT_SEED_PRICES[sellSymbol] || 100;
+    setIsSelling(true);
+    try {
+      await createTransaction({ userId: user.id, symbol: sellSymbol, type: 'sell', quantity: qty, price });
+      setSellSuccess(`✓ Sold ${qty} × ${sellSymbol} @ $${price.toFixed(2)}`);
+      setSellQty('1');
+      await loadPortfolio();
+      setTimeout(() => { setShowSellModal(false); setSellSuccess(''); }, 1500);
+    } catch (err: any) { setSellError(err.message || 'Transaction failed.'); }
+    finally { setIsSelling(false); }
+  };
+
+  const getAIPredictorOpinion = (symbol: string) => {
+    const h = liveHoldings.find(x => x.symbol === symbol);
+    if (!h) return { advice: 'Analyze', color: 'text-primary' };
+    
+    if (h.pnlPct > 15) return { advice: 'Strong Sell - Take Profits Now', color: 'text-bullish' };
+    if (h.pnlPct > 5) return { advice: 'Moderate Sell - Looking Good', color: 'text-bullish' };
+    if (h.pnlPct < -10) return { advice: 'Cut Loss - High Risk detected', color: 'text-bearish' };
+    if (h.pnlPct < -5) return { advice: 'Hold - Expecting Recovery', color: 'text-warning' };
+    return { advice: 'Hold - Stable Trend', color: 'text-primary' };
   };
 
   /* ── Run projection for a stock (3mo, 6mo, 1yr) ── */
@@ -277,6 +329,18 @@ const PortfolioPage: React.FC = () => {
                               <span className="flex items-center gap-1"><Brain className="w-3 h-3" /> AI Forecast</span>
                             )}
                           </button>
+                          <button
+                            onClick={() => {
+                              setSellSymbol(h.symbol);
+                              setSellQty('1');
+                              setShowSellModal(true);
+                              setSellError('');
+                              setSellSuccess('');
+                            }}
+                            className="ml-2 text-xs px-3 py-1.5 bg-bearish/10 text-bearish rounded-lg hover:bg-bearish/20 transition-all font-medium"
+                          >
+                            Sell
+                          </button>
                         </td>
                       </motion.tr>
 
@@ -415,6 +479,74 @@ const PortfolioPage: React.FC = () => {
                 <button onClick={handleBuy} disabled={isBuying}
                   className="w-full h-10 bg-primary text-primary-foreground font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm">
                   {isBuying ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processing…</> : <><ShoppingCart className="w-4 h-4" /> Confirm Buy</>}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Sell Stock Modal ── */}
+      <AnimatePresence>
+        {showSellModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={e => { if (e.target === e.currentTarget) setShowSellModal(false); }}
+          >
+            <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
+              className="bg-card border border-border rounded-2xl w-full max-w-md p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <TrendingDown className="w-5 h-5 text-bearish" />
+                  <h2 className="text-lg font-semibold">Sell Stock: {sellSymbol}</h2>
+                </div>
+                <button onClick={() => setShowSellModal(false)} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors"><X className="w-4 h-4" /></button>
+              </div>
+              
+              <div className="space-y-4">
+                {/* AI Opinion Section */}
+                <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Brain className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-primary">AI Predictor Opinion</span>
+                  </div>
+                  <div className={`text-sm font-semibold ${getAIPredictorOpinion(sellSymbol).color}`}>
+                    {getAIPredictorOpinion(sellSymbol).advice}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Based on current P&L and 12-month trend simulation.</p>
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider block mb-2 font-medium">Quantity to Sell</label>
+                  <input type="number" min="1" max={holdings.find(h => h.symbol === sellSymbol)?.quantity || 1} 
+                    value={sellQty} onChange={e => setSellQty(e.target.value)}
+                    className="w-full h-10 px-3 bg-secondary border border-border rounded-xl font-mono text-foreground focus:outline-none focus:border-primary transition-colors" />
+                  <span className="text-xs text-muted-foreground mt-1 block">Max available: {holdings.find(h => h.symbol === sellSymbol)?.quantity || 0}</span>
+                </div>
+
+                <div className="p-3 bg-secondary/50 border border-border/50 rounded-xl">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Market Price</span>
+                    <span className="text-bearish font-mono font-bold">${(livePricesRef.current[sellSymbol] || 0).toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-bearish/5 border border-bearish/20 rounded-xl">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Total Proceeds</span>
+                    <span className="font-mono font-bold">
+                      ${((livePricesRef.current[sellSymbol] || 0) * (parseInt(sellQty) || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
+
+                {sellError && <p className="text-xs text-bearish bg-bearish/10 border border-bearish/30 px-3 py-2 rounded-xl">{sellError}</p>}
+                {sellSuccess && <p className="text-xs text-bullish bg-bullish/10 border border-bullish/30 px-3 py-2 rounded-xl">{sellSuccess}</p>}
+                
+                <button onClick={handleSell} disabled={isSelling}
+                  className="w-full h-10 bg-bearish text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm">
+                  {isSelling ? <><RefreshCw className="w-4 h-4 animate-spin" /> Processing…</> : <><TrendingDown className="w-4 h-4" /> Confirm Sell</>}
                 </button>
               </div>
             </motion.div>

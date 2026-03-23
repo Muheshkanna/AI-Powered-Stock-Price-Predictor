@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft, Brain, TrendingUp, TrendingDown, Activity, Zap,
   DollarSign, BarChart, ShieldCheck, Building2, Users, Calendar,
-  Globe, PieChart, ArrowUpRight, ArrowDownRight
+  Globe, PieChart, ArrowUpRight, ArrowDownRight, AlertTriangle, Search
 } from 'lucide-react';
 import { fetchStocks, formatHistoryToPricePoints } from '@/lib/api';
 import StockChart from '@/components/dashboard/StockChart';
@@ -70,6 +70,54 @@ const COMPANY_INFO: Record<string, {
     shareholders: [{ name: 'Ethereum Foundation', pct: 0.3 }, { name: 'Vitalik Buterin', pct: 0.2 }, { name: 'Grayscale ETH Trust', pct: 2.1 }, { name: 'Staking Validators', pct: 15.0 }],
     metrics: { peRatio: 0, eps: 0, divYield: 0, beta: 2.8, high52w: 4870, low52w: 1520, ytdReturn: -12.1 },
   },
+  ADBE: {
+    description: 'Adobe is a leader in creative software, including Photoshop, Illustrator, and Acrobat. It also provides digital marketing and document management solutions.',
+    sector: 'Technology', industry: 'Software - Infrastructure', founded: '1982', ceo: 'Shantanu Narayen', headquarters: 'San Jose, CA', employees: '29,000+',
+    shareholders: [{ name: 'Vanguard Group', pct: 8.5 }, { name: 'BlackRock', pct: 7.2 }],
+    metrics: { peRatio: 45.2, eps: 12.35, divYield: 0, beta: 1.15, high52w: 638.25, low52w: 433.97, ytdReturn: -5.4 },
+  },
+  DIS: {
+    description: 'The Walt Disney Company is a global entertainment leader, covering media networks, theme parks, and studio entertainment (Disney, Pixar, Marvel, Star Wars).',
+    sector: 'Consumer', industry: 'Entertainment', founded: '1923', ceo: 'Bob Iger', headquarters: 'Burbank, CA', employees: '225,000+',
+    shareholders: [{ name: 'Vanguard Group', pct: 7.8 }, { name: 'BlackRock', pct: 6.5 }],
+    metrics: { peRatio: 24.5, eps: 4.62, divYield: 0.62, beta: 1.25, high52w: 123.74, low52w: 78.73, ytdReturn: 18.2 },
+  },
+  WMT: {
+    description: 'Walmart is the world\'s largest retailer, operating a chain of hypermarkets, discount department stores, and grocery stores. It is the largest private employer globally.',
+    sector: 'Consumer', industry: 'Retail', founded: '1962', ceo: 'Doug McMillon', headquarters: 'Bentonville, AR', employees: '2,100,000+',
+    shareholders: [{ name: 'Walton Family', pct: 45.0 }, { name: 'Vanguard Group', pct: 4.5 }],
+    metrics: { peRatio: 28.3, eps: 2.12, divYield: 1.34, beta: 0.49, high52w: 61.54, low52w: 48.12, ytdReturn: 12.5 },
+  },
+  ORCL: {
+    description: 'Oracle Corporation is a multinational computer technology corporation that sells database software and technology, cloud engineered systems, and enterprise software products.',
+    sector: 'Technology', industry: 'Software - Infrastructure', founded: '1977', ceo: 'Safra Catz', headquarters: 'Austin, TX', employees: '164,000+',
+    shareholders: [{ name: 'Larry Ellison', pct: 42.5 }, { name: 'Vanguard Group', pct: 5.2 }],
+    metrics: { peRatio: 32.4, eps: 3.82, divYield: 1.25, beta: 0.94, high52w: 132.74, low52w: 98.17, ytdReturn: 14.2 },
+  },
+  CRM: {
+    description: 'Salesforce is the global leader in Customer Relationship Management (CRM), helping companies connect with their customers in a whole new way through cloud, mobile, social, and AI.',
+    sector: 'Technology', industry: 'Software - Application', founded: '1999', ceo: 'Marc Benioff', headquarters: 'San Francisco, CA', employees: '72,000+',
+    shareholders: [{ name: 'Marc Benioff', pct: 4.2 }, { name: 'Vanguard Group', pct: 8.1 }],
+    metrics: { peRatio: 48.2, eps: 8.42, divYield: 0.45, beta: 1.18, high52w: 318.52, low52w: 198.17, ytdReturn: 18.2 },
+  },
+  AVGO: {
+    description: 'Broadcom Inc. is a global technology leader that designs, develops and supplies a broad range of semiconductor and infrastructure software solutions.',
+    sector: 'Technology', industry: 'Semiconductors', founded: '1961', ceo: 'Hock Tan', headquarters: 'Palo Alto, CA', employees: '20,000+',
+    shareholders: [{ name: 'Vanguard Group', pct: 7.9 }, { name: 'BlackRock', pct: 6.5 }],
+    metrics: { peRatio: 42.5, eps: 34.22, divYield: 1.62, beta: 1.14, high52w: 1438.17, low52w: 780.22, ytdReturn: 28.4 },
+  },
+  COST: {
+    description: 'Costco Wholesale Corporation operates an international chain of membership warehouses that carry quality, brand-name merchandise at substantially lower prices than typical retail outlets.',
+    sector: 'Consumer', industry: 'Retail', founded: '1983', ceo: 'Ron Vachris', headquarters: 'Issaquah, WA', employees: '310,000+',
+    shareholders: [{ name: 'Vanguard Group', pct: 8.2 }, { name: 'BlackRock', pct: 6.9 }],
+    metrics: { peRatio: 46.8, eps: 15.42, divYield: 0.62, beta: 0.78, high52w: 787.32, low52w: 472.17, ytdReturn: 12.5 },
+  },
+  UBER: {
+    description: 'Uber Technologies, Inc. is a technology platform that uses a massive network, leading technology, operational excellence and product expertise to power movement from A to B.',
+    sector: 'Technology', industry: 'Software - Application', founded: '2009', ceo: 'Dara Khosrowshahi', headquarters: 'San Francisco, CA', employees: '30,000+',
+    shareholders: [{ name: 'Vanguard Group', pct: 7.2 }, { name: 'BlackRock', pct: 6.1 }],
+    metrics: { peRatio: 82.4, eps: 0.92, divYield: 0, beta: 1.45, high52w: 82.14, low52w: 38.17, ytdReturn: 24.2 },
+  },
 };
 
 const DEFAULT_INFO = {
@@ -83,15 +131,29 @@ const StockDetailPage: React.FC = () => {
   const { symbol } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
   const [stock, setStock] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [amount, setAmount] = useState('10');
   const [isSimulating, setIsSimulating] = useState(false);
   const [simResult, setSimResult] = useState<any>(null);
 
   useEffect(() => {
     const loadStock = async () => {
-      const stocks = await fetchStocks();
-      const found = stocks.find(s => s.symbol === symbol);
-      if (found) setStock(found);
+      setIsLoading(true);
+      setError(null);
+      try {
+        const stocks = await fetchStocks();
+        const found = stocks.find(s => s.symbol.toUpperCase() === symbol?.toUpperCase());
+        if (found) {
+          setStock(found);
+        } else {
+          setError(`Stock symbol "${symbol}" not found in our database.`);
+        }
+      } catch (err) {
+        setError('Failed to load stock data. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadStock();
   }, [symbol]);
@@ -114,12 +176,90 @@ const StockDetailPage: React.FC = () => {
     }, 1500);
   };
 
-  if (!stock) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-muted-foreground">Loading data for {symbol}...</p>
+  if (isLoading) return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center overflow-hidden">
+      <div className="relative mb-12">
+        {/* Bioluminescent Pulse rings */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary/20 rounded-full animate-ping opacity-20" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-primary/10 rounded-full animate-ping opacity-10 [animation-delay:0.5s]" />
+        
+        <div className="relative w-24 h-24 border-4 border-primary/10 rounded-full shadow-[0_0_30px_rgba(var(--primary),0.1)] flex items-center justify-center bg-card">
+          <div className="w-full h-full border-b-4 border-primary rounded-full animate-spin absolute top-0 left-0" />
+          <div className="flex flex-col items-center">
+            <Activity className="w-10 h-10 text-primary animate-pulse" />
+          </div>
+        </div>
       </div>
+      
+      <div className="space-y-4 max-w-sm">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
+          <Zap className="w-3.5 h-3.5 text-primary animate-bounce" />
+          <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Market Data Analysis Pulse</span>
+        </div>
+        <h2 className="text-2xl font-bold text-foreground">Analyzing Intelligence</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Retrieving real-time metrics, sentiment scores, and <span className="text-primary font-semibold">AI projections</span> for <span className="font-mono font-bold text-foreground">{symbol}</span>...
+        </p>
+      </div>
+      
+      {/* Loading progress bar */}
+      <div className="mt-10 w-64 h-1.5 bg-secondary rounded-full overflow-hidden border border-border/50">
+        <motion.div 
+          className="h-full bg-primary"
+          initial={{ width: "0%" }}
+          animate={{ width: "100%" }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </div>
+    </div>
+  );
+
+  if (error || !stock) return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+      <motion.div 
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: "spring", damping: 20 }}
+        className="bg-card/50 backdrop-blur-xl border border-border p-10 rounded-[2.5rem] shadow-2xl max-w-lg w-full relative overflow-hidden"
+      >
+        {/* Decorative elements */}
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-bearish/10 blur-[80px] rounded-full" />
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-primary/10 blur-[80px] rounded-full" />
+        
+        <div className="w-20 h-20 bg-bearish/10 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-bearish/20 shadow-xl shadow-bearish/5">
+          <Search className="w-10 h-10 text-bearish" />
+        </div>
+        
+        <h2 className="text-3xl font-bold text-foreground mb-4 tracking-tight">Stock Not Found</h2>
+        <p className="text-muted-foreground mb-10 text-lg leading-relaxed">
+          The symbol <span className="px-2 py-0.5 bg-secondary rounded font-mono font-bold text-foreground border border-border">{symbol}</span> isn't in our active watchlists or supported exchanges yet.
+        </p>
+        
+        <div className="grid grid-cols-1 gap-4">
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="group relative w-full py-4 bg-primary text-primary-foreground font-bold rounded-2xl hover:shadow-[0_10px_30px_rgba(var(--primary),0.3)] transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+          >
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> 
+            Back to Global Markets
+          </button>
+          
+          <div className="mt-8 pt-8 border-t border-border/50 flex flex-col gap-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Recommended Actions</p>
+            <div className="flex justify-center gap-3">
+              {['NVDA', 'AAPL', 'TSLA'].map(s => (
+                <button 
+                  key={s}
+                  onClick={() => navigate(`/stock/${s}`)}
+                  className="px-4 py-2 bg-secondary/50 hover:bg-secondary border border-border rounded-xl text-xs font-bold transition-colors"
+                >
+                  View {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 
