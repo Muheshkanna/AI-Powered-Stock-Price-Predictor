@@ -80,8 +80,8 @@ const Dashboard: React.FC = () => {
   const filteredStocks = React.useMemo(() => {
     const query = debouncedSearchQuery.toLowerCase().trim();
     if (!query) return stocks.slice(0, 4); // Trending stocks if empty
-    return stocks.filter(s => 
-      s.symbol.toLowerCase().includes(query) || 
+    return stocks.filter(s =>
+      s.symbol.toLowerCase().includes(query) ||
       s.name.toLowerCase().includes(query)
     ).slice(0, 6);
   }, [debouncedSearchQuery, stocks]);
@@ -97,27 +97,27 @@ const Dashboard: React.FC = () => {
     loadData();
   }, []);
   React.useEffect(() => {
-  const loadPortfolio = async () => {
-    try {
-      const token = localStorage.getItem("token");
+    const loadPortfolio = async () => {
+      try {
+        const token = localStorage.getItem("token");
 
-      const res = await fetch("/api/transactions/portfolio", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        const res = await fetch("/api/transactions/portfolio", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        setPortfolioData(data);
+        if (res.ok) {
+          const data = await res.json();
+          setPortfolioData(data.portfolio || data);
+        }
+      } catch (error) {
+        console.error("Failed to load portfolio:", error);
       }
-    } catch (error) {
-      console.error("Failed to load portfolio:", error);
-    }
-  };
+    };
 
-  loadPortfolio();
-}, []);
+    loadPortfolio();
+  }, []);
 
   // Periodic price updates for realism
   React.useEffect(() => {
@@ -169,7 +169,7 @@ const Dashboard: React.FC = () => {
 
             {/* Search */}
             <div className="relative">
-              <Search 
+              <Search
                 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground cursor-pointer hover:text-primary transition-colors z-10"
                 onClick={() => {
                   if (filteredStocks.length > 0) {
@@ -253,7 +253,7 @@ const Dashboard: React.FC = () => {
                         <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Try searching for</p>
                         <div className="flex flex-wrap justify-center gap-2 mt-3">
                           {['AAPL', 'TSLA', 'NVDA'].map(t => (
-                            <button 
+                            <button
                               key={t}
                               onClick={() => setSearchQuery(t)}
                               className="px-2 py-1 bg-secondary hover:bg-primary/10 hover:text-primary rounded text-[10px] font-mono transition-colors"
