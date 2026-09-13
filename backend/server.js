@@ -32,6 +32,11 @@ app.get('/', (req, res) => {
   res.send('AI Finance Backend API is running');
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Start locally, but don't listen on Vercel
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+export default app;
