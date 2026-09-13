@@ -146,7 +146,7 @@ export const aiInsights = [
   },
 ];
 
-export const portfolioData = {
+export const userPortfolio = {
   totalValue: 124750.00,
   dailyChange: 1847.32,
   dailyChangePercent: 1.50,

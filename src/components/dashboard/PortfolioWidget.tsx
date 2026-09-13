@@ -1,14 +1,14 @@
 import React from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
-interface PortfolioData {
+interface userPortfolio {
   totalValue: number;
   dailyChange: number;
   dailyChangePercent: number;
   positions: { symbol: string; shares: number; avgCost: number; currentPrice: number; value: number }[];
 }
 
-const PortfolioWidget: React.FC<{ data: PortfolioData }> = ({ data }) => {
+const PortfolioWidget: React.FC<{ data: userPortfolio }> = ({ data }) => {
   return (
     <div>
       <div className="mb-3">
