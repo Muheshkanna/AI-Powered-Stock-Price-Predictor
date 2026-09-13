@@ -1,7 +1,6 @@
 import { StockData, PricePoint } from './mockData'; // to reuse the types
 
-const API_BASE_URL = 'http://localhost:5000/api';
-
+const API_BASE_URL = '/api';
 export const fetchStocks = async (): Promise<StockData[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/stocks`);
@@ -66,7 +65,7 @@ export const fetchTopLosers = async (): Promise<StockData[]> => {
 // Map backend history format to frontend PricePoint format for Recharts
 export const formatHistoryToPricePoints = (rawHistory: any[], currentPrice: number): PricePoint[] => {
   if (!rawHistory) return [];
-  
+
   // Create prediction tail
   const mapped = rawHistory.map((point: any, index: number) => {
     const isPrediction = index >= rawHistory.length - 15;
