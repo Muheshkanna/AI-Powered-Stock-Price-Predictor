@@ -100,26 +100,44 @@ const Dashboard: React.FC = () => {
   React.useEffect(() => {
     const loadPortfolio = async () => {
       try {
-        const token = localStorage.getItem("token");
+        if (!user?.id) return;
 
-        const res = await fetch("/api/transactions/portfolio", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const res = await fetch(`/api/transactions/summary/${user.id}`);
+
+        if (!res.ok) throw new Error("Failed to load portfolio");
+
+        const holdings = await res.json();
+
+        let totalValue = 0;
+
+        const positions = holdings.map((h: any) => {
+          const stock = stocks.find(s => s.symbol === h.symbol);
+          const currentPrice = stock?.price || h.avgPrice;
+          const value = h.quantity * currentPrice;
+          totalValue += value;
+
+          return {
+            symbol: h.symbol,
+            shares: h.quantity,
+            avgCost: h.avgPrice,
+            currentPrice,
+            value,
+          };
         });
 
-        if (!res.ok) throw new Error("Failed to fetch portfolio");
-
-        const data = await res.json();
-
-        setuserPortfolio(data.portfolio || data);
+        setuserPortfolio({
+          totalValue,
+          dailyChange: 0,
+          dailyChangePercent: 0,
+          positions,
+        });
       } catch (err) {
-        console.error("Portfolio error:", err);
+        console.error(err);
       }
     };
 
     loadPortfolio();
-  }, []);
+  }, [user, stocks]);
 
   // Periodic price updates for realism
   React.useEffect(() => {
