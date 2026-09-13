@@ -55,7 +55,7 @@ const Dashboard: React.FC = () => {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [showSearch, setShowSearch] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
-  const [portfolioData, setPortfolioData] = React.useState({
+  const [userPortfolio, setuserPortfolio] = React.useState({
     totalValue: 0,
     dailyChange: 0,
     dailyChangePercent: 0,
@@ -109,7 +109,7 @@ const Dashboard: React.FC = () => {
 
         if (res.ok) {
           const data = await res.json();
-          setPortfolioData(data.portfolio || data);
+          setuserPortfolio(data.portfolio || data);
         }
       } catch (error) {
         console.error("Failed to load portfolio:", error);
@@ -333,10 +333,10 @@ const Dashboard: React.FC = () => {
               </div>
               <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
-            <div className="font-mono text-2xl font-bold">${portfolioData.totalValue.toLocaleString()}</div>
-            <div className={`font-mono text-sm mt-1 flex items-center gap-1 ${portfolioData.dailyChange >= 0 ? 'text-bullish' : 'text-bearish'}`}>
-              {portfolioData.dailyChange >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-              {portfolioData.dailyChange >= 0 ? '+' : ''}${portfolioData.dailyChange.toFixed(2)} ({portfolioData.dailyChangePercent.toFixed(2)}%) today
+            <div className="font-mono text-2xl font-bold">${userPortfolio.totalValue.toLocaleString()}</div>
+            <div className={`font-mono text-sm mt-1 flex items-center gap-1 ${userPortfolio.dailyChange >= 0 ? 'text-bullish' : 'text-bearish'}`}>
+              {userPortfolio.dailyChange >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+              {userPortfolio.dailyChange >= 0 ? '+' : ''}${userPortfolio.dailyChange.toFixed(2)} ({userPortfolio.dailyChangePercent.toFixed(2)}%) today
             </div>
           </div>
 
@@ -452,7 +452,7 @@ const Dashboard: React.FC = () => {
                 View All <ArrowRight className="w-3 h-3" />
               </span>
             </div>
-            <PortfolioWidget data={portfolioData} />
+            <PortfolioWidget data={userPortfolio} />
           </div>
 
           {/* Watchlist — inline */}
