@@ -96,6 +96,7 @@ const Dashboard: React.FC = () => {
     };
     loadData();
   }, []);
+
   React.useEffect(() => {
     const loadPortfolio = async () => {
       try {
@@ -107,12 +108,13 @@ const Dashboard: React.FC = () => {
           },
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          setuserPortfolio(data.portfolio || data);
-        }
-      } catch (error) {
-        console.error("Failed to load portfolio:", error);
+        if (!res.ok) throw new Error("Failed to fetch portfolio");
+
+        const data = await res.json();
+
+        setuserPortfolio(data.portfolio || data);
+      } catch (err) {
+        console.error("Portfolio error:", err);
       }
     };
 
