@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchStocks, formatHistoryToPricePoints } from '@/lib/api';
 import {
   watchlistStocks, sectorHeatmap, newsItems, aiInsights,
-  portfolioData, crashProbability, generatePriceHistory
+  crashProbability, generatePriceHistory
 } from '@/lib/mockData';
 import StockChart from '@/components/dashboard/StockChart';
 import WatchlistTable from '@/components/dashboard/WatchlistTable';
@@ -55,6 +55,18 @@ const Dashboard: React.FC = () => {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [showSearch, setShowSearch] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
+  const [portfolioData, setPortfolioData] = React.useState({
+    totalValue: 0,
+    dailyChange: 0,
+    dailyChangePercent: 0,
+    positions: [] as {
+      symbol: string;
+      shares: number;
+      avgCost: number;
+      currentPrice: number;
+      value: number;
+    }[],
+  });
 
   // Debounce logic
   React.useEffect(() => {
@@ -84,6 +96,28 @@ const Dashboard: React.FC = () => {
     };
     loadData();
   }, []);
+  React.useEffect(() => {
+  const loadPortfolio = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("/api/transactions/portfolio", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setPortfolioData(data);
+      }
+    } catch (error) {
+      console.error("Failed to load portfolio:", error);
+    }
+  };
+
+  loadPortfolio();
+}, []);
 
   // Periodic price updates for realism
   React.useEffect(() => {
