@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "postinstall": "npm --prefix backend run postinstall"
+    "postinstall": "npm --prefix backend install"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
