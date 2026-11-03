@@ -6,11 +6,33 @@ const router = express.Router();
 // GET all stocks
 router.get('/', async (req, res) => {
   try {
-    const stocks = await Stock.find().sort({ marketCap: -1 });
+    const stocks = await Stock.findAll();
     res.json(stocks);
   } catch (error) {
-    console.error('Error fetching stocks:', error);
-    res.status(500).json({ message: 'Server Error' });
+    console.error('Error fetching stocks:', error.message || error);
+    res.status(500).json({ message: 'Server Error fetching stocks' });
+  }
+});
+
+// GET top gainers (defined before /:symbol to avoid route shadowing)
+router.get('/market/top-gainers', async (req, res) => {
+  try {
+    const gainers = await Stock.findTopGainers(5);
+    res.json(gainers);
+  } catch (error) {
+    console.error('Error fetching top gainers:', error.message || error);
+    res.status(500).json({ message: 'Server Error fetching top gainers' });
+  }
+});
+
+// GET top losers (defined before /:symbol to avoid route shadowing)
+router.get('/market/top-losers', async (req, res) => {
+  try {
+    const losers = await Stock.findTopLosers(5);
+    res.json(losers);
+  } catch (error) {
+    console.error('Error fetching top losers:', error.message || error);
+    res.status(500).json({ message: 'Server Error fetching top losers' });
   }
 });
 
@@ -18,36 +40,16 @@ router.get('/', async (req, res) => {
 router.get('/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
-    const stock = await Stock.findOne({ symbol });
-    
+    const stock = await Stock.findBySymbol(symbol);
+
     if (!stock) {
       return res.status(404).json({ message: 'Stock not found' });
     }
-    
+
     res.json(stock);
   } catch (error) {
-    console.error(`Error fetching stock ${req.params.symbol}:`, error);
-    res.status(500).json({ message: 'Server Error' });
-  }
-});
-
-// GET top gainers
-router.get('/market/top-gainers', async (req, res) => {
-  try {
-    const gainers = await Stock.find().sort({ changePercent: -1 }).limit(5);
-    res.json(gainers);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
-  }
-});
-
-// GET top losers
-router.get('/market/top-losers', async (req, res) => {
-  try {
-    const losers = await Stock.find().sort({ changePercent: 1 }).limit(5);
-    res.json(losers);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    console.error(`Error fetching stock ${req.params.symbol}:`, error.message || error);
+    res.status(500).json({ message: 'Server Error fetching stock' });
   }
 });
 

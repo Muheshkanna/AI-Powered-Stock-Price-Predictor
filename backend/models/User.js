@@ -1,32 +1,47 @@
-import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { prisma } from '../db.js';
 
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-// Hash password before saving
-userSchema.pre('save', async function() {
-  console.log('Pre-save hook triggered for:', this.email);
-  if (!this.isModified('password')) return;
-  
-  try {
-    console.log('Hashing password...');
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    console.log('Password hashed successfully');
-  } catch (err) {
-    console.error('Bcrypt error:', err);
-    throw err;
+export class UserModel {
+  static async findByEmail(email) {
+    return prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    });
   }
-});
 
-// Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
-};
+  static async findById(id) {
+    return prisma.user.findUnique({
+      where: { id },
+    });
+  }
 
-export const User = mongoose.model('User', userSchema);
+  static async create({ name, email, password }) {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    return prisma.user.create({
+      data: {
+        name,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+      },
+    });
+  }
+
+  static async comparePassword(candidatePassword, hashedPassword) {
+    return bcrypt.compare(candidatePassword, hashedPassword);
+  }
+
+  static format(user) {
+    if (!user) return null;
+    return {
+      id: user.id,
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt,
+    };
+  }
+}
+
+export const User = UserModel;
+export default UserModel;

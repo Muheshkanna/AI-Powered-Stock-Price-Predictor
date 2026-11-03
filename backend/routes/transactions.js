@@ -1,61 +1,51 @@
 import express from 'express';
 import { Transaction } from '../models/Transaction.js';
-import { Stock } from '../models/Stock.js';
 
 const router = express.Router();
 
-// Get user transactions
+// GET portfolio summary (defined before /:userId so "summary" is not caught as a userId)
+router.get('/summary/:userId', async (req, res) => {
+  try {
+    const summary = await Transaction.getPortfolioSummary(req.params.userId);
+    res.json(summary);
+  } catch (error) {
+    console.error('Error calculating portfolio summary:', error.message || error);
+    res.status(500).json({ message: 'Error calculating portfolio' });
+  }
+});
+
+// GET user transactions
 router.get('/:userId', async (req, res) => {
   try {
-    const transactions = await Transaction.find({ userId: req.params.userId }).sort({ timestamp: -1 });
+    const transactions = await Transaction.findByUserId(req.params.userId);
     res.json(transactions);
   } catch (error) {
+    console.error('Error fetching transactions:', error.message || error);
     res.status(500).json({ message: 'Error fetching transactions' });
   }
 });
 
-// Create new transaction
+// POST create new transaction
 router.post('/', async (req, res) => {
   try {
     const { userId, symbol, type, quantity, price } = req.body;
-    const transaction = new Transaction({ userId, symbol, type, quantity, price });
-    await transaction.save();
-    res.status(201).json(transaction);
-  } catch (error) {
-    res.status(500).json({ message: 'Error creating transaction' });
-  }
-});
 
-// Get portfolio summary
-router.get('/summary/:userId', async (req, res) => {
-  try {
-    const transactions = await Transaction.find({ userId: req.params.userId });
-    
-    // Simple aggregator for holdings
-    const holdings = {};
-    transactions.forEach(t => {
-      if (!holdings[t.symbol]) holdings[t.symbol] = { quantity: 0, totalCost: 0 };
-      if (t.type === 'buy') {
-        holdings[t.symbol].quantity += t.quantity;
-        holdings[t.symbol].totalCost += t.quantity * t.price;
-      } else {
-        holdings[t.symbol].quantity -= t.quantity;
-        holdings[t.symbol].totalCost -= t.quantity * t.price; // This is a simplification
-      }
+    if (!userId || !symbol || !type || quantity == null || price == null) {
+      return res.status(400).json({ message: 'userId, symbol, type, quantity, and price are required' });
+    }
+
+    const transaction = await Transaction.create({
+      userId,
+      symbol,
+      type,
+      quantity: Number(quantity),
+      price: Number(price),
     });
 
-    // Remove zeroed holdings
-    const activeHoldings = Object.keys(holdings)
-      .filter(symbol => holdings[symbol].quantity > 0)
-      .map(symbol => ({
-        symbol,
-        quantity: holdings[symbol].quantity,
-        avgPrice: holdings[symbol].totalCost / holdings[symbol].quantity
-      }));
-
-    res.json(activeHoldings);
+    res.status(201).json(transaction);
   } catch (error) {
-    res.status(500).json({ message: 'Error calculating portfolio' });
+    console.error('Error creating transaction:', error.message || error);
+    res.status(500).json({ message: 'Error creating transaction' });
   }
 });
 
