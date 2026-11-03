@@ -136,3 +136,4 @@ If you have historical data in MongoDB Atlas to migrate:
 2. Set `DATABASE_URL` and `JWT_SECRET` in your Vercel project environment variables.
    * If using Neon or Supabase connection poolers (PgBouncer), use the pooled connection string with `?sslmode=require`.
 3. Deploy directly with git push or Vercel CLI. Build commands automatically run `npm run db:generate`.
+
