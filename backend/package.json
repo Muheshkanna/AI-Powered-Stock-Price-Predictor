@@ -5,6 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
+    "postinstall": "prisma generate --schema prisma/schema.prisma",
     "test": "node test/db.test.js",
     "dev": "nodemon server.js",
     "start": "node server.js",

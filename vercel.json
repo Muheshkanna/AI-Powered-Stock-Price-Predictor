@@ -1,9 +1,16 @@
 {
   "version": 2,
+  "regions": ["sin1"],
   "builds": [
     {
       "src": "backend/server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "backend/prisma/**",
+          "backend/prisma.config.js"
+        ]
+      }
     },
     {
       "src": "package.json",
