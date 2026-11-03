@@ -1,29 +1,28 @@
-import mongoose from 'mongoose';
-import { Stock } from './models/Stock.js';
+import { prisma, pool } from './db.js';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
-// Generate some realistic looking mock chart data
+// Generate realistic looking mock chart data
 const generateChartData = (startPrice, volatility, numPoints = 100) => {
   const data = [];
   let currentPrice = startPrice;
   const now = new Date();
-  
+
   for (let i = numPoints; i >= 0; i--) {
     const time = new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
     const changePercent = (Math.random() - 0.5) * volatility;
     currentPrice = currentPrice * (1 + changePercent);
-    
+
     data.push({
       time: time,
-      value: parseFloat(currentPrice.toFixed(2))
+      value: parseFloat(currentPrice.toFixed(2)),
     });
   }
   return data;
 };
 
-const seedData = [
+export const seedStocksData = [
   {
     symbol: 'AAPL',
     name: 'Apple Inc.',
@@ -33,7 +32,7 @@ const seedData = [
     volume: '52.4M',
     marketCap: '2.9T',
     aiPrediction: { trend: 'bullish', confidence: 85, targetPrice: 200.00 },
-    historicalData: generateChartData(150, 0.02)
+    historicalData: generateChartData(150, 0.02),
   },
   {
     symbol: 'MSFT',
@@ -44,7 +43,7 @@ const seedData = [
     volume: '22.1M',
     marketCap: '3.1T',
     aiPrediction: { trend: 'neutral', confidence: 60, targetPrice: 420.00 },
-    historicalData: generateChartData(350, 0.015)
+    historicalData: generateChartData(350, 0.015),
   },
   {
     symbol: 'NVDA',
@@ -55,7 +54,7 @@ const seedData = [
     volume: '65.2M',
     marketCap: '2.2T',
     aiPrediction: { trend: 'bullish', confidence: 92, targetPrice: 1000.00 },
-    historicalData: generateChartData(500, 0.04)
+    historicalData: generateChartData(500, 0.04),
   },
   {
     symbol: 'TSLA',
@@ -66,7 +65,7 @@ const seedData = [
     volume: '95.4M',
     marketCap: '550B',
     aiPrediction: { trend: 'bearish', confidence: 75, targetPrice: 150.00 },
-    historicalData: generateChartData(250, 0.05)
+    historicalData: generateChartData(250, 0.05),
   },
   {
     symbol: 'AMZN',
@@ -77,7 +76,7 @@ const seedData = [
     volume: '40.6M',
     marketCap: '1.8T',
     aiPrediction: { trend: 'bullish', confidence: 80, targetPrice: 195.00 },
-    historicalData: generateChartData(130, 0.02)
+    historicalData: generateChartData(130, 0.02),
   },
   {
     symbol: 'META',
@@ -88,7 +87,7 @@ const seedData = [
     volume: '15.9M',
     marketCap: '1.3T',
     aiPrediction: { trend: 'bullish', confidence: 88, targetPrice: 550.00 },
-    historicalData: generateChartData(300, 0.03)
+    historicalData: generateChartData(300, 0.03),
   },
   {
     symbol: 'GOOGL',
@@ -99,7 +98,7 @@ const seedData = [
     volume: '25.3M',
     marketCap: '1.9T',
     aiPrediction: { trend: 'neutral', confidence: 65, targetPrice: 165.00 },
-    historicalData: generateChartData(120, 0.02)
+    historicalData: generateChartData(120, 0.02),
   },
   {
     symbol: 'BTC',
@@ -110,7 +109,7 @@ const seedData = [
     volume: '45.2B',
     marketCap: '1.3T',
     aiPrediction: { trend: 'bullish', confidence: 78, targetPrice: 75000.00 },
-    historicalData: generateChartData(40000, 0.06)
+    historicalData: generateChartData(40000, 0.06),
   },
   {
     symbol: 'ETH',
@@ -121,30 +120,50 @@ const seedData = [
     volume: '20.1B',
     marketCap: '460B',
     aiPrediction: { trend: 'neutral', confidence: 55, targetPrice: 4000.00 },
-    historicalData: generateChartData(2000, 0.07)
-  }
+    historicalData: generateChartData(2000, 0.07),
+  },
 ];
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ai_finance_app';
-
-async function seedDatabase() {
+export async function seedDatabase() {
   try {
-    await mongoose.connect(MONGODB_URI);
-    console.log('Connected to MongoDB');
+    console.log('Connecting to PostgreSQL for stock seeding...');
 
-    // Clear existing data
-    await Stock.deleteMany({});
-    console.log('Cleared existing stocks data');
+    for (const stock of seedStocksData) {
+      await prisma.stock.upsert({
+        where: { symbol: stock.symbol },
+        update: {
+          name: stock.name,
+          price: stock.price,
+          change: stock.change,
+          changePercent: stock.changePercent,
+          volume: stock.volume,
+          marketCap: stock.marketCap,
+          aiPrediction: stock.aiPrediction,
+          historicalData: stock.historicalData,
+        },
+        create: {
+          symbol: stock.symbol,
+          name: stock.name,
+          price: stock.price,
+          change: stock.change,
+          changePercent: stock.changePercent,
+          volume: stock.volume,
+          marketCap: stock.marketCap,
+          aiPrediction: stock.aiPrediction,
+          historicalData: stock.historicalData,
+        },
+      });
+    }
 
-    // Insert seeded data
-    await Stock.insertMany(seedData);
-    console.log(`Successfully seeded ${seedData.length} stocks into the database`);
-    
+    console.log(`Successfully seeded ${seedStocksData.length} stocks into PostgreSQL`);
   } catch (err) {
-    console.error('Error seeding data:', err);
+    console.error('Error seeding stocks:', err.message || err);
   } finally {
-    mongoose.connection.close();
+    await prisma.$disconnect();
+    await pool.end().catch(() => {});
   }
 }
 
-seedDatabase();
+if (process.argv[1] && process.argv[1].endsWith('seed.js')) {
+  seedDatabase();
+}

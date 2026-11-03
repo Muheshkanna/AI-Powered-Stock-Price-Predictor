@@ -1,33 +1,35 @@
-import mongoose from 'mongoose';
 import { User } from './models/User.js';
+import { prisma, pool } from './db.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ai_finance_app';
-
-async function seedUser() {
+export async function seedUser() {
   try {
-    await mongoose.connect(MONGODB_URI);
-    console.log('Connected to MongoDB for user seeding...');
+    console.log('Connecting to PostgreSQL for user seeding...');
 
-    const existingUser = await User.findOne({ email: 'test@example.com' });
+    const existingUser = await User.findByEmail('test@example.com');
     if (existingUser) {
-      console.log('User already exists.');
-    } else {
-      const user = new User({
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'password123'
-      });
-      await user.save();
-      console.log('Successfully seeded test user.');
+      console.log('Test user already exists:', existingUser.email);
+      return existingUser;
     }
+
+    const user = await User.create({
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'password123',
+    });
+
+    console.log('Successfully seeded test user:', user.email);
+    return user;
   } catch (error) {
-    console.error('User seeding error:', error);
+    console.error('User seeding error:', error.message || error);
   } finally {
-    mongoose.connection.close();
+    await prisma.$disconnect();
+    await pool.end().catch(() => {});
   }
 }
 
-seedUser();
+if (process.argv[1] && process.argv[1].endsWith('seedUser.js')) {
+  seedUser();
+}
